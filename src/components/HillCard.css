@@ -1,0 +1,21 @@
+.HillCard{
+    flex: auto;
+}
+
+.CurrentHill{
+    flex-grow: 1;
+    flex-direction: column;
+    display: flex;
+}
+
+.Factory{
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+}
+
+.cardContent{
+    flex-grow: 1;
+    display: flex;
+    padding: 10px;
+}
