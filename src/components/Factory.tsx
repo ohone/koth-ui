@@ -33,7 +33,7 @@ function Factory(props: FactoryProps) {
                 </Form.Text>
             </Form.Group>
         <div className="d-grid gap-2">
-            <Button disabled={reign === undefined || address === undefined} onClick={c => props.context.createKoth(reign, address!)} variant="primary">
+            <Button disabled={reign === undefined || address === undefined} onClick={c => props.context.createKoth(reign * 60, address!)} variant="primary">
                 Create
             </Button>
         </div>

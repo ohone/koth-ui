@@ -12,7 +12,7 @@ export interface IChainContext {
   authorizedBalance: () => Promise<number>;
   approveBalance: (num: number) => Promise<void>;
   claimVictory: () => Promise<void>;
-  createKoth: (reign: number, address: string) => Promise<void>;
+  createKoth: (reignSeconds: number, address: string) => Promise<void>;
 }
 
 export class ChainContext implements IChainContext {
