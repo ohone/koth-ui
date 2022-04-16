@@ -63,9 +63,8 @@ export class ChainContext implements IChainContext {
       factoryABI as AbiItem[],
       ChainInfos.filter((o) => o.ChainId == chainId)[0].FactoryAddress
     );
-    const account = await this.getAccount();
     return await contract.methods
-      .CreateKoth(reign, address)
+      .CreateKotH(reign, address)
       .send({ from: await this.getAccount() });
   };
 
@@ -75,9 +74,7 @@ export class ChainContext implements IChainContext {
       this.KotHAddress
     );
     const account = await this.getAccount();
-    return await contract.methods
-      .claimVictory(account)
-      .send({ from: await this.getAccount() });
+    return await contract.methods.claimVictory(account).send({ from: account });
   };
 
   getTokenAddress: () => Promise<string> = () => {
