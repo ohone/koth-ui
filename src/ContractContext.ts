@@ -136,7 +136,7 @@ export class ChainContext implements IChainContext {
         ...contractVals,
         winning:
           data[idx + 1] !== undefined &&
-          (data[idx + 1].returnValues[amountString] as number) <
+          (data[idx + 1].returnValues[amountString] as number) <=
             contractVals.amount,
       };
     });
