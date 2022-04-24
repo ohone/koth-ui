@@ -26,7 +26,7 @@ function App() {
       .catch(a => console.log(a));
   })
 
-  const contractContext = new ChainContext(web3, '0xdCa675164Ff44fE1BB5FB7e7E2A953Df174d8083');
+  const contractContext = new ChainContext('0xdCa675164Ff44fE1BB5FB7e7E2A953Df174d8083');
 
   return (
     <div className="App">
@@ -36,7 +36,9 @@ function App() {
           King of the Hill
         </div>
       </header>
-      {account !== undefined ? <HillCard contractContext={contractContext}/> : undefined}
+      {account !== undefined 
+        ? <HillCard chainContext={contractContext}/> 
+        : undefined}
     </div>
   );
 }

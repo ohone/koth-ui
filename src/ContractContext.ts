@@ -5,6 +5,7 @@ import { abi as ERC20Abi } from "./IERC20.json";
 import { AbiItem } from "web3-utils";
 import { abi as factoryABI } from "./KotHFactory.json";
 import { ChainInfos } from "./Chains.json";
+import { HistoryItemProps } from "./components/HistoryItem";
 
 export interface IChainContext {
   getHillState: () => Promise<HillState>;
@@ -13,40 +14,37 @@ export interface IChainContext {
   approveBalance: (num: number) => Promise<void>;
   claimVictory: () => Promise<void>;
   createKoth: (reignSeconds: number, address: string) => Promise<void>;
+  getCaptures: () => Promise<HistoryItemProps[]>;
 }
 
 export class ChainContext implements IChainContext {
-  private Instance: Web3;
   private KotHAddress: string;
   private TokenAddress: string | undefined;
 
-  constructor(instance: Web3, KotHAddress: string) {
-    this.Instance = instance;
+  constructor(KotHAddress: string) {
     this.KotHAddress = KotHAddress;
   }
 
   getAccount: () => Promise<string> = async () => {
-    return (await this.Instance.eth.getAccounts())[0];
+    return (await new Web3(Web3.givenProvider).eth.getAccounts())[0];
   };
 
   captureHill: (amount: number) => Promise<void> = async (amount) => {
-    const contract = new this.Instance.eth.Contract(
-      abi as AbiItem[],
-      this.KotHAddress
-    );
+    const w3 = new Web3(Web3.givenProvider);
+    const contract = new w3.eth.Contract(abi as AbiItem[], this.KotHAddress);
 
-    const account = (await this.Instance.eth.getAccounts())[0];
+    const account = (await w3.eth.getAccounts())[0];
     await contract.methods.capture(amount).send({ from: account });
   };
 
   authorizedBalance: () => Promise<number> = async () => {
     const tokenAddress = await this.getTokenAddress();
-    const tokenContract = new this.Instance.eth.Contract(
+    const tokenContract = new new Web3(Web3.givenProvider).eth.Contract(
       ERC20Abi as AbiItem[],
       tokenAddress
     );
 
-    const user = (await this.Instance.eth.getAccounts())[0];
+    const user = (await new Web3(Web3.givenProvider).eth.getAccounts())[0];
 
     const allowance = await tokenContract.methods
       .allowance(user, this.KotHAddress)
@@ -58,8 +56,9 @@ export class ChainContext implements IChainContext {
     reign,
     address
   ) => {
-    const chainId = await this.Instance.eth.getChainId();
-    const contract = new this.Instance.eth.Contract(
+    const w3 = new Web3(Web3.givenProvider);
+    const chainId = await w3.eth.getChainId();
+    const contract = new w3.eth.Contract(
       factoryABI as AbiItem[],
       ChainInfos.filter((o) => o.ChainId == chainId)[0].FactoryAddress
     );
@@ -69,7 +68,7 @@ export class ChainContext implements IChainContext {
   };
 
   claimVictory: () => Promise<void> = async () => {
-    const contract = new this.Instance.eth.Contract(
+    const contract = new new Web3(Web3.givenProvider).eth.Contract(
       abi as AbiItem[],
       this.KotHAddress
     );
@@ -81,7 +80,7 @@ export class ChainContext implements IChainContext {
     if (this.TokenAddress !== undefined) {
       return this.TokenAddress;
     }
-    const contract = new this.Instance.eth.Contract(
+    const contract = new new Web3(Web3.givenProvider).eth.Contract(
       abi as AbiItem[],
       this.KotHAddress
     );
@@ -90,7 +89,7 @@ export class ChainContext implements IChainContext {
   };
 
   approveBalance: (num: number) => Promise<void> = async (num) => {
-    const contract = new this.Instance.eth.Contract(
+    const contract = new new Web3(Web3.givenProvider).eth.Contract(
       ERC20Abi as AbiItem[],
       await this.getTokenAddress()
     );
@@ -101,7 +100,7 @@ export class ChainContext implements IChainContext {
   };
 
   getHillState: () => Promise<HillState> = async () => {
-    const contract = new this.Instance.eth.Contract(
+    const contract = new new Web3(Web3.givenProvider).eth.Contract(
       abi as AbiItem[],
       this.KotHAddress
     );
@@ -116,4 +115,33 @@ export class ChainContext implements IChainContext {
       allowance: await this.authorizedBalance(),
     };
   };
+
+  getCaptures: () => Promise<HistoryItemProps[]> = async () => {
+    const contract = new new Web3(Web3.givenProvider).eth.Contract(
+      abi as AbiItem[],
+      this.KotHAddress
+    );
+
+    const data = await contract.getPastEvents("Captured", {
+      fromBlock: 0,
+      toBlock: "latest",
+    });
+
+    return data.map((d, idx) => {
+      var contractVals = {
+        name: d.returnValues[kingString] as string,
+        amount: d.returnValues[amountString] as number,
+      };
+      return {
+        ...contractVals,
+        winning:
+          data[idx + 1] !== undefined &&
+          (data[idx + 1].returnValues[amountString] as number) <
+            contractVals.amount,
+      };
+    });
+  };
 }
+
+const kingString: string = "king";
+const amountString: string = "amount";

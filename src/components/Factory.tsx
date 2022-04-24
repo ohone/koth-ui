@@ -27,7 +27,10 @@ function Factory(props: FactoryProps) {
             </Form.Group>
             <Form.Group className="mb-3" controlId="formBasicPassword">
                 <Form.Label>Reign: {reign} minutes</Form.Label>
-                <Form.Range defaultValue={10} onChange={r => setReign(Number(r.target.value))}/>
+                <Form.Range 
+                    min={1} 
+                    defaultValue={10} 
+                    onChange={r => setReign(Number(r.target.value))}/>
                 <Form.Text className="text-muted">
                     How many minutes one must be king before being victorious.
                 </Form.Text>

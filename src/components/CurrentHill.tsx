@@ -1,57 +1,67 @@
-import React from 'react';
-import { Button, Form } from 'react-bootstrap';
+import React, { useEffect, useState } from 'react';
+import { Button } from 'react-bootstrap';
 import { HillState } from './HillCard';
 import hill from '../hill.png';
 import './CurrentHill.css';
+import { IChainContext } from '../ContractContext';
 
 interface CurrentHillProps{
-    hill: HillState | undefined,
     hidden: boolean,
+    chainContext: IChainContext,
     capture: (num: number) => Promise<void>,
     approve: (num: number) => Promise<void>,
     victory: () => Promise<void>
 }
 
 function CurrentHill(props: CurrentHillProps){
+    const [hillState, setHillState] = useState<HillState>();
+    useEffect(() => {
+        if (hillState === undefined){
+            props.chainContext.getHillState().then(s => setHillState(s));
+        }
+    });
 
-    const expiry = (expiryTimestamp : number) => {
-        const expiryDate = new Date(expiryTimestamp / 1000);
-        return (<div className="Expiry">Expiry: {expiryDate.getMinutes()} minutes</div>);
-    }
-
-    const view = props.hill === undefined ? <div>error</div> : (
-        <div className='HillDetail'>
-            <div className="CurrentAmount">{props.hill.value}</div>
+    const view = hillState === undefined 
+    ? <div>Loading...</div> 
+    : (<div className='HillDetail'>
+            <div className="CurrentAmount">{hillState.value}</div>
             <div className="CurrentAmountTitle">Current Amount</div>
             <img className='hill' src={hill} alt="fireSpot"/>
-            <div className="King">👑 {props.hill.king === '0x0000000000000000000000000000000000000000' ? <a>unclaimed</a> : props.hill.king}</div>
-            {expiry(props.hill.expiry)}
+            <div className="King">👑 {hillState.king === '0x0000000000000000000000000000000000000000' ? <a>unclaimed</a> : hillState.king}</div>
+            {expiry(hillState.expiry)}
         </div>)
-
-    const buttons = renderButtons(props);
 
     return(<div className="CurrentHill" hidden={props.hidden}>
         {view}
         <div className="d-grid gap-2">
-            {buttons}
+            {buttons(props, hillState)}
         </div>
     </div>) 
 }
 
-function renderButtons(props : CurrentHillProps) : JSX.Element{
-    if (props.hill === undefined){
+function buttons(props : CurrentHillProps, hill : HillState | undefined) : JSX.Element{
+    if (hill === undefined){
         return (<Button disabled={true}>Loading...</Button>)
     }
 
-    if (props.hill.captured){
-        return (<Button disabled={!props.hill.captured || props.hill.captured && new Date(props.hill.expiry / 1000) > new Date()} onClick={() => props.victory()}>Claim Victory</Button>)
+    if (hill.captured){
+        return (<Button disabled={!hill.captured || hill.captured && new Date(hill.expiry / 1000) > new Date()} onClick={() => props.victory()}>Claim Victory</Button>)
     }
 
-    const value = props.hill.value;
-    if (props.hill.allowance <= props.hill.value){
+    const value = hill.value;
+    if (hill.allowance <= hill.value){
         return (<Button onClick={(_) => props.approve(value + 1)}>Approve Tokens</Button>)
     }
-    return <Button disabled={props.hill.captured} onClick={(_) => props.capture(value + 1)}>Capture Hill</Button>
+    return (<Button 
+        disabled={hill.captured} 
+        onClick={(_) => props.capture(value + 1)}>
+            Capture Hill
+        </Button>)
+}
+
+function expiry(timestamp: number){
+    const expiryDate = new Date(timestamp * 1000);
+    return (<div className="Expiry">Expires: {expiryDate.toUTCString()}</div>);
 }
 
 export default CurrentHill;
