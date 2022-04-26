@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { ListGroup } from 'react-bootstrap';
-import { IChainContext } from '../ContractContext';
+import { Card, ListGroup, Placeholder } from 'react-bootstrap';
+import { IChainContext } from '../ChainContext';
 import {HistoryItem, HistoryItemProps} from './HistoryItem';
 
 interface HistoryProps{
@@ -38,7 +38,17 @@ function renderItems(items: HistoryItemProps[]){
 }
 
 function loading(){
-    return <div className='loading'>loading</div>
+    return (
+    <div>
+    <Placeholder as={Card.Title} animation="glow">
+            <Placeholder xs={6} />
+        </Placeholder>
+        <Placeholder as={Card.Text} animation="glow">
+            <Placeholder xs={7} /> <Placeholder xs={4} /> <Placeholder xs={4} />{' '}
+            <Placeholder xs={6} /> <Placeholder xs={8} />
+        </Placeholder>
+    </div>
+        )
 }
 
 export default History;

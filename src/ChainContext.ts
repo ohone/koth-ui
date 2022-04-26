@@ -8,13 +8,15 @@ import { ChainInfos } from "./Chains.json";
 import { HistoryItemProps } from "./components/HistoryItem";
 
 export interface IChainContext {
-  getHillState: () => Promise<HillState>;
+  getHillState: (address: string) => Promise<HillState>;
   captureHill: (amount: number) => Promise<void>;
   authorizedBalance: () => Promise<number>;
   approveBalance: (num: number) => Promise<void>;
   claimVictory: () => Promise<void>;
   createKoth: (reignSeconds: number, address: string) => Promise<void>;
   getCaptures: () => Promise<HistoryItemProps[]>;
+  isValid: () => boolean;
+  getCreations: () => Promise<string[]>;
 }
 
 export class ChainContext implements IChainContext {
@@ -23,7 +25,10 @@ export class ChainContext implements IChainContext {
 
   constructor(KotHAddress: string) {
     this.KotHAddress = KotHAddress;
+    this.isValid = () => KotHAddress.length > 0;
   }
+
+  isValid: () => boolean;
 
   getAccount: () => Promise<string> = async () => {
     return (await new Web3(Web3.givenProvider).eth.getAccounts())[0];
@@ -99,21 +104,33 @@ export class ChainContext implements IChainContext {
       .send({ from: await this.getAccount() });
   };
 
-  getHillState: () => Promise<HillState> = async () => {
+  getHillState: (address: string) => Promise<HillState> = async () => {
     const contract = new new Web3(Web3.givenProvider).eth.Contract(
       abi as AbiItem[],
       this.KotHAddress
     );
     const king = await contract.methods.king().call();
-    const currentValue = await contract.methods.currentAmount().call();
-    const expires = await contract.methods.expires().call();
     return {
       king: king,
-      value: currentValue,
-      expiry: expires,
+      value: await contract.methods.currentAmount().call(),
+      expiry: await contract.methods.expires().call(),
       captured: (await this.getAccount()) === king,
       allowance: await this.authorizedBalance(),
+      token: await contract.methods.tokenAddress().call(),
     };
+  };
+
+  getCreations: () => Promise<string[]> = async () => {
+    const w3 = new Web3(Web3.givenProvider);
+    const chainId = await w3.eth.getChainId();
+    const contract = new w3.eth.Contract(
+      factoryABI as AbiItem[],
+      ChainInfos.filter((o) => o.ChainId == chainId)[0].FactoryAddress
+    );
+
+    return (await contract.getPastEvents("KotHCreated")).map(
+      (o) => o.returnValues["koth"] as string
+    );
   };
 
   getCaptures: () => Promise<HistoryItemProps[]> = async () => {

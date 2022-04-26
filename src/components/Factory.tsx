@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
-import { IChainContext } from '../ContractContext';
+import { IChainContext } from '../ChainContext';
 import "./Factory.css";
 
 interface FactoryProps{
@@ -13,6 +13,7 @@ function Factory(props: FactoryProps) {
     const [address, setAddress] = useState<string>();
     return (
         <Form hidden={props.hidden}>
+        <div className='formBody'>
             <Form.Text className="text">
                 The factory allows deployment of a new hill. The factory is currently available on the following chains:
             </Form.Text>
@@ -35,6 +36,7 @@ function Factory(props: FactoryProps) {
                     How many minutes one must be king before being victorious.
                 </Form.Text>
             </Form.Group>
+        </div>
         <div className="d-grid gap-2">
             <Button disabled={reign === undefined || address === undefined} onClick={c => props.context.createKoth(reign * 60, address!)} variant="primary">
                 Create

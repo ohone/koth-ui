@@ -1,16 +1,18 @@
-import { Nav } from 'react-bootstrap';
+import { Nav, Tab, Tabs } from 'react-bootstrap';
 import Card from 'react-bootstrap/Card';
 import "./HillCard.css";
 import History from './History';
 import React, { useState } from 'react';
 import CurrentHill from './CurrentHill';
-import { IChainContext } from '../ContractContext';
+import { IChainContext } from '../ChainContext';
 import Factory from './Factory';
+import CreatedHills from './CreatedHills';
 
-type cardState = "current" | "history" | "factory";
+type cardState = "current" | "history" | "factory" | "hills";
 
 interface HillCardProps{
-    chainContext: IChainContext
+    chainContext: IChainContext,
+    contract: string
 }
 
 export interface HillState{
@@ -18,33 +20,38 @@ export interface HillState{
     value: number,
     expiry: number,
     captured: boolean,
-    allowance: number
+    allowance: number,
+    token: string
 }
 
 function HillCard(props: HillCardProps) {
-    
-    const [cardState, setCardState] = useState<cardState>('current');
+
+    const [cardState, setCardState] = useState<cardState>(props.chainContext.isValid() ? 'current' : 'factory');
 
     return (
         <div className='HillCard'>
             <Card style={{ width: '32rem', height:'40rem' }} border="secondary">
             <Card.Header>
-                <Nav variant="tabs">
-                    <Nav.Item>
-                        <Nav.Link onClick={() => setCardState("current")}>Current Hill</Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                        <Nav.Link onClick={() => setCardState("history")}>History</Nav.Link>
-                    </Nav.Item>
-                    <Nav.Item>
-                        <Nav.Link onClick={() => setCardState("factory")}>Factory</Nav.Link>
-                    </Nav.Item>
-                </Nav>
+                <Tabs defaultActiveKey={cardState} onSelect={k => setCardState(k as cardState)}>
+                    <Tab 
+                        eventKey="current"
+                        title="Hill" 
+                        disabled={!props.chainContext.isValid()}/>
+                    <Tab 
+                        eventKey="history"
+                        title="History"
+                        disabled={!props.chainContext.isValid()}/>
+                    <Tab 
+                        eventKey="factory"
+                        title="Factory"/>
+                    <Tab 
+                        eventKey="hills"
+                        title="Hills"/>
+                </Tabs>
             </Card.Header>
             <div className='cardContent'>
                 {cardContent(cardState, props)}
             </div>
-            <Card.Footer className="text-muted">Last Captured:</Card.Footer>
             </Card>
         </div>
     );
@@ -54,6 +61,7 @@ function cardContent(cardState : cardState, props: HillCardProps) : JSX.Element{
     switch (cardState){
         case 'current':{
             return <CurrentHill 
+            contract={props.contract}
             hidden={cardState !== 'current'} 
             chainContext={props.chainContext} 
             victory={() => props.chainContext.claimVictory()}
@@ -67,6 +75,9 @@ function cardContent(cardState : cardState, props: HillCardProps) : JSX.Element{
         }
         case 'history':{
             return <History hidden={cardState !== 'history'} context={props.chainContext}/>
+        }
+        case 'hills':{
+            return <CreatedHills hidden={false} chainContext={props.chainContext} />
         }
     }
 }
