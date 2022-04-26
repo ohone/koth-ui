@@ -21,7 +21,8 @@ export interface HillState{
     expiry: number,
     captured: boolean,
     allowance: number,
-    token: string
+    token: string,
+    address: string
 }
 
 function HillCard(props: HillCardProps) {
@@ -66,7 +67,7 @@ function cardContent(cardState : cardState, props: HillCardProps) : JSX.Element{
             chainContext={props.chainContext} 
             victory={() => props.chainContext.claimVictory()}
             capture={num => props.chainContext.captureHill(num)} 
-            approve={num => props.chainContext.approveBalance(num)}/>;
+            approve={num => props.chainContext.approveBalance(num, props.contract)}/>;
         }
         case 'factory':{
             return <Factory 

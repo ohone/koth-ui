@@ -10,15 +10,18 @@ interface CurrentHillProps{
 }
 
 function CreatedHills(props: CurrentHillProps){
-    const [state, setState] = useState<HillState[]>([]);
+    const [state, setState] = useState<HillState[]>();
 
     useEffect(() => {
-        props.chainContext.getCreations()
-            .then(
-                async c => {
-                    await Promise.all(c.map(addr => props.chainContext.getHillState(addr)))
-                        .then(c => setState(c));
-                })});
+        if (state === undefined){
+            props.chainContext.getCreations()
+                .then(
+                    async c => {
+                        await Promise.all(c.map(addr => props.chainContext.getHillState(addr)))
+                            .then(c => setState(c));
+                    })}
+        }
+    );
 
     return(<div className="CurrentHill" hidden={props.hidden}>
         <Table striped bordered hover>
@@ -30,11 +33,11 @@ function CreatedHills(props: CurrentHillProps){
                 </tr>
             </thead>
             <tbody>
-            {state.map(s => (<tr>
+            {state !== undefined ? state.map(s => (<tr onClick={o => {window.location.href='/' + s.address }}>
                 <td>{s.token}</td>
                 <td>{s.value}</td>
                 <td>{s.expiry}</td>
-                </tr>))}
+                </tr>)) : undefined}
             </tbody>
         </Table>
     </div>) 

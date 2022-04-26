@@ -11,12 +11,15 @@ export interface IChainContext {
   getHillState: (address: string) => Promise<HillState>;
   captureHill: (amount: number) => Promise<void>;
   authorizedBalance: () => Promise<number>;
-  approveBalance: (num: number) => Promise<void>;
+  approveBalance: (num: number, address: string) => Promise<void>;
   claimVictory: () => Promise<void>;
   createKoth: (reignSeconds: number, address: string) => Promise<void>;
   getCaptures: () => Promise<HistoryItemProps[]>;
   isValid: () => boolean;
   getCreations: () => Promise<string[]>;
+  supportedChain: (chainId: number) => boolean;
+  getSupportedChains: () => number[];
+  switchChain: (chainId: number) => void;
 }
 
 export class ChainContext implements IChainContext {
@@ -93,21 +96,24 @@ export class ChainContext implements IChainContext {
     return contract.methods.getTokenAddress().call();
   };
 
-  approveBalance: (num: number) => Promise<void> = async (num) => {
+  approveBalance: (num: number, address: string) => Promise<void> = async (
+    num,
+    address
+  ) => {
     const contract = new new Web3(Web3.givenProvider).eth.Contract(
       ERC20Abi as AbiItem[],
       await this.getTokenAddress()
     );
 
     return contract.methods
-      .approve(this.KotHAddress, num)
+      .approve(address, num)
       .send({ from: await this.getAccount() });
   };
 
-  getHillState: (address: string) => Promise<HillState> = async () => {
+  getHillState: (address: string) => Promise<HillState> = async (address) => {
     const contract = new new Web3(Web3.givenProvider).eth.Contract(
       abi as AbiItem[],
-      this.KotHAddress
+      address
     );
     const king = await contract.methods.king().call();
     return {
@@ -117,6 +123,7 @@ export class ChainContext implements IChainContext {
       captured: (await this.getAccount()) === king,
       allowance: await this.authorizedBalance(),
       token: await contract.methods.tokenAddress().call(),
+      address: address,
     };
   };
 
@@ -128,9 +135,12 @@ export class ChainContext implements IChainContext {
       ChainInfos.filter((o) => o.ChainId == chainId)[0].FactoryAddress
     );
 
-    return (await contract.getPastEvents("KotHCreated")).map(
-      (o) => o.returnValues["koth"] as string
-    );
+    const events = await contract.getPastEvents("KotHCreated", {
+      fromBlock: 0,
+      toBlock: "latest",
+    });
+    console.log(events);
+    return events.map((o) => o.returnValues["koth"] as string);
   };
 
   getCaptures: () => Promise<HistoryItemProps[]> = async () => {
@@ -156,6 +166,21 @@ export class ChainContext implements IChainContext {
           (data[idx + 1].returnValues[amountString] as number) <=
             contractVals.amount,
       };
+    });
+  };
+
+  supportedChain: (chainId: number) => boolean = (chainId) => {
+    return ChainInfos.filter((o) => o.ChainId == chainId).length !== 0;
+  };
+
+  getSupportedChains: () => number[] = () => {
+    return ChainInfos.map((o) => o.ChainId);
+  };
+
+  switchChain: (chainId: number) => void = (chainId) => {
+    (window as any).ethereum.request({
+      method: "wallet_switchEthereumChain",
+      params: [{ chainId: new Web3(Web3.givenProvider).utils.toHex(chainId) }],
     });
   };
 }

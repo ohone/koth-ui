@@ -3,7 +3,7 @@ import HillCard from './components/HillCard';
 import "./App.css";
 import Web3 from 'web3'
 import ConnectedPill from './components/ConnectedPill';
-import { ChainContext } from './ChainContext';
+import { ChainContext, IChainContext } from './ChainContext';
 import { useLocation } from 'react-router-dom'
 import { Button, Modal } from 'react-bootstrap';
 
@@ -36,8 +36,10 @@ function App() {
     : undefined;
 
   console.log(invalidAddressAlertModal);
+  const context = new ChainContext(address);
   return (
     <div className="App">
+      {chainId !== undefined ? unsupportedChainAlert(context, chainId) : undefined}
       {invalidAddressAlertModal}
       <header className="App-header">
         <ConnectedPill ChainId={chainId} Address={account} BalanceWei={balance}/>
@@ -52,6 +54,34 @@ function App() {
   );
 }
 
+function unsupportedChainAlert(context: IChainContext, chainId: number){
+  const supported = context.supportedChain(chainId);
+  if (supported){
+    return undefined;
+  }
+
+  const supportedChainButtons = context.getSupportedChains().map(chain => {
+    return (<Button variant='primary' onClick={() => context.switchChain(chain)}>chain {chain}</Button>)
+  })
+
+
+  return (<Modal
+    show={true}
+    backdrop="static"
+    keyboard={false}
+  >
+    <Modal.Header closeButton>
+      <Modal.Title>Unsupported Chain</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      Chain {chainId} is not supported. Choose a supported chain to switch to:
+    </Modal.Body>
+    <Modal.Footer>
+      {supportedChainButtons}
+    </Modal.Footer>
+  </Modal>)
+}
+
 function invalidAddressAlert(web3: Web3, address : string) {
   if (address.length === 0){
     return undefined;
@@ -61,7 +91,6 @@ function invalidAddressAlert(web3: Web3, address : string) {
     return undefined;
   }
   const handleClose = () => {
-    console.log('handle');
     window.location.href='/';
   };
 
