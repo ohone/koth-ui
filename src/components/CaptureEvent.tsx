@@ -1,5 +1,5 @@
 import React from 'react';
-import { Badge } from 'react-bootstrap';
+import {Badge} from 'react-bootstrap';
 import TruncatedAddress from './TruncatedAddress';
 import './CaptureEvent.css';
 

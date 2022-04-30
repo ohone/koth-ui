@@ -1,5 +1,5 @@
-import React from "react";
-import { Modal, ModalProps } from "react-bootstrap";
+import React from 'react';
+import {Modal} from 'react-bootstrap';
 
 interface IErrorModal{
     title: string,
@@ -7,22 +7,22 @@ interface IErrorModal{
     footer: JSX.Element[],
 }
 
-function ErrorModal(props: IErrorModal){
-    return (<Modal
-      show={true}
-      backdrop="static"
-      keyboard={false}
-    >
-      <Modal.Header closeButton>
-        <Modal.Title>{props.title}</Modal.Title>
-      </Modal.Header>
-      <Modal.Body>
-        {props.body}
-      </Modal.Body>
-      <Modal.Footer>
-        {props.footer}
-      </Modal.Footer>
-    </Modal>)
-  }
+function ErrorModal(props: IErrorModal) {
+  return (<Modal
+    show={true}
+    backdrop="static"
+    keyboard={false}
+  >
+    <Modal.Header closeButton>
+      <Modal.Title>{props.title}</Modal.Title>
+    </Modal.Header>
+    <Modal.Body>
+      {props.body}
+    </Modal.Body>
+    <Modal.Footer>
+      {props.footer}
+    </Modal.Footer>
+  </Modal>);
+}
 
 export default ErrorModal;

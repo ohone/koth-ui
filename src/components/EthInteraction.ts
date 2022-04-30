@@ -11,13 +11,13 @@ export class EthInteraction {
     this.interactions = interactions;
   }
 
-  next: () => Promise<
+  async next() : Promise<
     { label: string; action: () => Promise<any> } | undefined
-  > = async () => {
+    > {
     for (const interaction of this.interactions) {
       if (await interaction.applicable()) {
-        console.log(interaction.label + ":applicable");
-        return { label: interaction.label, action: interaction.action };
+        console.log(interaction.label + ':applicable');
+        return {label: interaction.label, action: interaction.action};
       }
     }
     return undefined;

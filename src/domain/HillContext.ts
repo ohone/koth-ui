@@ -1,11 +1,11 @@
-import Web3 from "web3";
-import { CaptureEvent } from "../components/CaptureEvent";
-import { HillState } from "../HillState";
-import { abi } from "../KotH.json";
-import { AbiItem } from "web3-utils";
-import { abi as ERC20Abi } from "../IERC20.json";
-import { IChainContext } from "./IChainContext";
-import { IHillContext } from "./IHillContext";
+import Web3 from 'web3';
+import {CaptureEvent} from '../components/CaptureEvent';
+import {HillState} from '../HillState';
+import {abi} from '../KotH.json';
+import {AbiItem} from 'web3-utils';
+import {abi as ERC20Abi} from '../IERC20.json';
+import {IChainContext} from './IChainContext';
+import {IHillContext} from './IHillContext';
 
 export class HillContext implements IHillContext {
   private web3: Web3;
@@ -19,11 +19,15 @@ export class HillContext implements IHillContext {
     this.web3 = new Web3(Web3.givenProvider);
   }
 
-  getChainContext: () => IChainContext = () => this.chainContext;
+  getChainContext() : IChainContext {
+    return this.chainContext;
+  }
 
-  getAddress: () => string = () => this.address;
+  getAddress() : string {
+    return this.address;
+  }
 
-  getHillState: () => Promise<HillState> = async () => {
+  async getHillState() : Promise<HillState> {
     const contract = new this.web3.eth.Contract(abi as AbiItem[], this.address);
     const king = await contract.methods.king().call();
     return {
@@ -37,64 +41,66 @@ export class HillContext implements IHillContext {
     };
   };
 
-  captureHill: (amount: number) => Promise<void> = async (amount) => {
+  async captureHill(amount: number) : Promise<void> {
     console.log(amount);
     const contract = new this.web3.eth.Contract(abi as AbiItem[], this.address);
 
     const account = await this.getChainContext().getAccount();
-    await contract.methods.capture(amount).send({ from: account });
-  };
+    await contract.methods.capture(amount).send({from: account});
+  }
 
-  getTokenAddress: () => Promise<string> = () => {
+  getTokenAddress() : Promise<string> {
     if (this.tokenAddress !== undefined) {
-      return this.tokenAddress;
+      return Promise.resolve(this.tokenAddress);
     }
     const contract = new this.web3.eth.Contract(abi as AbiItem[], this.address);
 
-    return contract.methods.getTokenAddress().call();
-  };
+    return contract.methods
+        .getTokenAddress()
+        .call();
+  }
 
-  authorizedBalance: () => Promise<number> = async () => {
+  async authorizedBalance() : Promise<number> {
     const tokenAddress = await this.getTokenAddress();
     const tokenContract = new this.web3.eth.Contract(
       ERC20Abi as AbiItem[],
-      tokenAddress
+      tokenAddress,
     );
 
     const user = (await this.web3.eth.getAccounts())[0];
 
     const allowance = await tokenContract.methods
-      .allowance(user, this.address)
-      .call();
+        .allowance(user, this.address)
+        .call();
 
     return allowance as number;
   };
 
-  approveBalance: (num: number) => Promise<void> = async (num) => {
+  async approveBalance(num : number) : Promise<void> {
     const contract = new this.web3.eth.Contract(
       ERC20Abi as AbiItem[],
-      await this.getTokenAddress()
+      await this.getTokenAddress(),
     );
     return contract.methods
-      .approve(await this.getTokenAddress(), num)
-      .send({ from: await this.chainContext.getAccount() });
+        .approve(await this.getTokenAddress(), num)
+        .send({from: await this.chainContext.getAccount()});
   };
 
-  claimVictory: () => Promise<void> = async () => {
+  async claimVictory() : Promise<void> {
     const contract = new this.web3.eth.Contract(abi as AbiItem[], this.address);
     const account = await this.chainContext.getAccount();
-    return await contract.methods.claimVictory(account).send({ from: account });
+    return await contract.methods.claimVictory(account).send({from: account});
   };
 
-  getCaptures: () => Promise<CaptureEvent[]> = async () => {
+  async getCaptures() : Promise<CaptureEvent[]> {
     const contract = new this.web3.eth.Contract(abi as AbiItem[], this.address);
-    const data = await contract.getPastEvents("Captured", {
+    const data = await contract.getPastEvents('Captured', {
       fromBlock: 0,
-      toBlock: "latest",
+      toBlock: 'latest',
     });
     console.log(data);
     return data.map((d, idx) => {
-      var contractVals = {
+      const contractVals = {
         name: d.returnValues[kingString] as string,
         amount: d.returnValues[amountString] as number,
       };
@@ -109,5 +115,5 @@ export class HillContext implements IHillContext {
   };
 }
 
-const kingString: string = "king";
-const amountString: string = "amount";
+const kingString: string = 'king';
+const amountString: string = 'amount';

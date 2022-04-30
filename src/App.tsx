@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, {useState, useEffect} from 'react';
 import MainCard from './components/MainCard';
-import "./App.css";
-import Web3 from 'web3'
+import './App.css';
+import Web3 from 'web3';
 import ConnectedPill from './components/ConnectedPill';
-import { ChainContext } from './domain/ChainContext';
-import { IChainContext } from "./domain/IChainContext";
+import {ChainContext} from './domain/ChainContext';
+import {IChainContext} from './domain/IChainContext';
 import NotConnectedPill from './components/NotConnectedPill';
 import UnsupportedChainModal from './components/UnsupportedChainModal';
 import ConnectToWeb3Modal from './components/ConnectToWeb3Modal';
@@ -13,89 +13,95 @@ import IncompatibleBrowserModal from './components/IncompatibleBrowserModal';
 const context = new ChainContext();
 
 function App() {
-
   const [account, setAccount] = useState<string>();
   const [chainId, setChainId] = useState<number>();
   const [balance, setBalance] = useState<string>();
   const [compatibleBrowser, setCompatibleBrowser] = useState<boolean>(false);
-  
-  if (Web3.givenProvider !== null && compatibleBrowser === false){
+
+  if (Web3.givenProvider !== null && compatibleBrowser === false) {
     setCompatibleBrowser(true);
   }
 
   useEffect(() => {
-    if (compatibleBrowser){
-      const getBalance : (acc:string) => Promise<string> = (acc) => context.getBalance(acc);
-      
-      if (!account){
-        context.getAccount().then(account => 
-          {
-            if (account){
-              setAccount(account);
-              getBalance(account).then(b => setBalance(b));
-            }
+    if (compatibleBrowser) {
+      const getBalance : (acc:string) => Promise<string> =
+      (acc) => context.getBalance(acc);
+
+      if (!account) {
+        context.getAccount().then((account) => {
+          if (account) {
+            setAccount(account);
+            getBalance(account).then((b) => setBalance(b));
           }
-          );
+        },
+        );
       }
-      
-      context.getChain().then(cId => {
-        console.log("chain:"+cId);
+
+      context.getChain().then((cId) => {
+        console.log('chain:'+cId);
         if (cId !== undefined && cId !== chainId) {
           setChainId(cId);
         }
       });
     }
   });
-  
-  const pill = chainId !== undefined && account !== undefined && balance !== undefined
-    ? (<ConnectedPill ChainId={chainId} Address={account} BalanceWei={balance}/>)
-    : (<NotConnectedPill/>)
+
+  const pill = chainId !== undefined &&
+   account !== undefined && balance !== undefined ?
+    (<ConnectedPill
+      ChainId={chainId} Address={account} BalanceWei={balance}/>) :
+    (<NotConnectedPill/>);
   const header = (
-  <header className="App-header">
-    {pill}
-    <div className='App-header-title'>
+    <header className="App-header">
+      {pill}
+      <div className='App-header-title'>
     King of the Hill
-    </div>
-  </header>)
-  
+      </div>
+    </header>);
+
   const errorModal = getErrorModal(
-    compatibleBrowser, 
-    (account !== undefined), 
-    chainId, 
-    setChainId, 
-    setAccount, 
-    context);
+      compatibleBrowser,
+      (account !== undefined),
+      chainId,
+      setChainId,
+      setAccount,
+      context);
 
   return (
     <div className="App">
       {errorModal}
       {header}
-      {compatibleBrowser 
-        ? <MainCard chainContext={new ChainContext()} /> 
-        : undefined}
+      {compatibleBrowser ?
+        <MainCard chainContext={new ChainContext()} /> :
+        undefined}
     </div>
   );
 }
 
 function getErrorModal(
-  compatible: boolean | undefined, 
-  connected: boolean, 
-  chainId: number | undefined,
-  setChain: (newChain: number) => void,
-  setAccount: (account: string) => void, 
-  context: IChainContext){
-  if (!compatible){
-    return (<IncompatibleBrowserModal/>)
+    compatible: boolean | undefined,
+    connected: boolean,
+    chainId: number | undefined,
+    setChain: (newChain: number) => void,
+    setAccount: (account: string) => void,
+    context: IChainContext) {
+  if (!compatible) {
+    return (<IncompatibleBrowserModal/>);
   }
-  if (!connected){
-    return (<ConnectToWeb3Modal connectToEth={() => context.requestConnection().then(accs => setAccount(accs[0]))}/>)
+  if (!connected) {
+    return (<ConnectToWeb3Modal
+      connectToEth={
+        () => context.requestConnection()
+            .then((accs) => setAccount(accs[0]))}/>);
   }
 
-  if (chainId !== undefined && !context.supportedChain(chainId)){
-    return (<UnsupportedChainModal 
-      chainId={chainId} 
-      switchChain={c => context.switchChainReturn(c).then(newChain => setChain(newChain))}
-      supportedChains={context.getSupportedChains()}/>)
+  if (chainId !== undefined && !context.supportedChain(chainId)) {
+    return (<UnsupportedChainModal
+      chainId={chainId}
+      switchChain={
+        (c) => context.switchChainReturn(c)
+            .then((newChain) => setChain(newChain))}
+      supportedChains={context.getSupportedChains()}/>);
   }
 }
 

@@ -1,6 +1,6 @@
-import { CaptureEvent } from "../components/CaptureEvent";
-import { HillState } from "../HillState";
-import { IChainContext } from "./IChainContext";
+import {CaptureEvent} from '../components/CaptureEvent';
+import {HillState} from '../HillState';
+import {IChainContext} from './IChainContext';
 
 export interface IHillContext {
   getAddress: () => string;
