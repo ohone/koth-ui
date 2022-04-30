@@ -1,31 +1,24 @@
 import React from 'react';
-import Web3 from 'web3';
+import TokenAmount from './TokenAmount';
+import TruncatedAddress from './TruncatedAddress';
+import './ConnectedPill.css';
 
-interface ConnectedChainProps{
-    ChainId: number | undefined,
-    Address: string | undefined,
-    BalanceWei: string | undefined
+interface ConnectedPillProps{
+    ChainId: number,
+    Address: string,
+    BalanceWei: string
 }
 
-function addressReadable(address: string) : string {
-    return address.slice(0, 5) + "..." + address.slice(address.length - 5, address.length - 1)
-} 
-
-function balanceReadable(balanceWei: string) : string {
-    let wei = Web3.utils.fromWei(balanceWei, 'ether');
-    return wei.slice(0, 6);
-}
-
-function connectedPill(props: ConnectedChainProps){
+function ConnectedPill(props: ConnectedPillProps){
     if (props.Address === undefined || props.BalanceWei === undefined){
         return(<div></div>);
     }
 
-    return (<div className="connectedPill">
+    return (
         <div className="pill">
-            {balanceReadable(props.BalanceWei)} ETH {addressReadable(props.Address)}
-        </div>
-    </div>)
+            <TokenAmount tokenName='ETH' tokenAmount={Number(props.BalanceWei)} tokenDecimals={18} places={6} />
+            <TruncatedAddress address={props.Address} />
+        </div>)
 }
 
-export default connectedPill;
+export default ConnectedPill;

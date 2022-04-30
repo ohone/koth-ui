@@ -1,28 +1,28 @@
 import React, { useEffect, useState } from 'react';
-import { Button, Placeholder } from 'react-bootstrap';
-import { HillState } from './HillCard';
+import { Placeholder } from 'react-bootstrap';
+import { HillState } from "../HillState";
 import hill from '../hill.png';
 import './CurrentHill.css';
-import { IChainContext } from '../ChainContext';
+import { IHillContext } from '../domain/IHillContext';
+import { EthInteraction } from './EthInteraction';
+import EthInteractionDrivenButton from './EthInteractonDrivenButton';
 
 interface CurrentHillProps{
     hidden: boolean,
-    chainContext: IChainContext,
-    contract: string,
-    capture: (num: number) => Promise<void>,
-    approve: (num: number) => Promise<void>,
-    victory: () => Promise<void>
+    hillContext: IHillContext,
 }
 
 function CurrentHill(props: CurrentHillProps){
     const [hillState, setHillState] = useState<HillState>();
+
     useEffect(() => {
         if (hillState === undefined){
-            props.chainContext.getHillState(props.contract).then(s => setHillState(s));
+            props.hillContext.getHillState().then(s => setHillState(s));
         }
     });
 
-    const view = (<div className='HillDetail'>
+    const view = (
+        <div className='HillDetail'>
             <div className="CurrentAmount">
                 {hillState === undefined ? (
                 <Placeholder animation='glow'>
@@ -49,32 +49,57 @@ function CurrentHill(props: CurrentHillProps){
     </div>) 
 }
 
-function buttons(props : CurrentHillProps, hill : HillState | undefined) : JSX.Element{
-    if (hill === undefined){
-        return (<Button disabled={true}>Loading...</Button>)
-    }
+function buttons(
+    props : CurrentHillProps, 
+    hill : HillState | undefined) : JSX.Element{
+    const chainContext = props.hillContext.getChainContext();
 
-    if (hill.captured){
-        return (<Button 
-                disabled={!hill.captured || hill.captured && new Date(hill.expiry / 1000) <= new Date()} 
-                onClick={() => props.victory()}>
-                    Claim Victory
-            </Button>)
-    }
-
-    const value = hill.value;
-    if (hill.allowance <= hill.value){
-        return (<Button onClick={(_) => props.approve(value + 1)}>Approve Tokens</Button>)
-    }
-    return (<Button 
-        disabled={hill.captured} 
-        onClick={(_) => props.capture(value + 1)}>
-            Capture Hill
-        </Button>)
+    const interactions = new EthInteraction(
+        [
+            {
+                label: "connect to ethereum",
+                action: () => chainContext.requestConnection(),
+                applicable: () => chainContext.isConnected().then(o => !o)
+            },
+            {
+                label: "switch chain",
+                action: () => chainContext.requestConnection(),
+                applicable: () => chainContext.getChain().then(chainId => !chainContext.supportedChain(chainId))
+            },
+            {
+                label: "claim victory",
+                action: () => props.hillContext.claimVictory(),
+                applicable: () => Promise.resolve(hill !== undefined && hill.captured)
+            },
+            {
+                label: "approve tokens",
+                action: () =>  props.hillContext.approveBalance(hill!.value + 1),
+                applicable: async () => {
+                    if (hill === undefined || !hill.captured){
+                        return false;
+                    }
+                    return await props.hillContext.authorizedBalance().then(b => {
+                        console.log(hill);
+                        return b <= hill.value;
+                    });
+                }
+            },
+            {
+                label: "capture hill",
+                action: async () => await props.hillContext.captureHill(await props.hillContext.authorizedBalance()),
+                applicable: () => Promise.resolve(hill !== undefined && !hill.captured)
+            }
+        ]);
+    
+    const interactionButton = (<EthInteractionDrivenButton interaction={interactions} />)
+        return interactionButton;
 }
 
 function expiry(timestamp: number){
     const expiryDate = new Date(timestamp * 1000);
+    if (isNaN(expiryDate.valueOf())){
+        return undefined;
+    }
     return (<div className="Expiry">Expires: {expiryDate.toString()}</div>);
 }
 

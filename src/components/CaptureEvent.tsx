@@ -1,19 +1,19 @@
 import React from 'react';
 import { Badge } from 'react-bootstrap';
-import Address from './Address';
-import './HistoryItem.css';
+import TruncatedAddress from './TruncatedAddress';
+import './CaptureEvent.css';
 
-export interface HistoryItemProps{
+export interface CaptureEvent{
     name: string,
     amount: number,
     winning: boolean
 }
 
-export function HistoryItem(props: HistoryItemProps) {
+export function CaptureEvent(props: CaptureEvent) {
   return (
-    <div className='HistoryItem'>
+    <div className='CaptureItem'>
       <div className='addressWrapper'>
-        <Address address={props.name}></Address>
+        <TruncatedAddress address={props.name}></TruncatedAddress>
       </div>
       {props.winning ? <div>👑</div> : undefined }
       <Badge bg="primary" pill>{props.amount}</Badge>

@@ -1,11 +1,7 @@
-.connectedPill{
+.pill{
     display: flex;
-    flex-direction: column;
+    flex-direction: row;
     align-items: right;
     justify-content: right;
-}
-
-.pill{
-    flex:auto;
-    text-align: right;
+    column-gap: 20px;
 }

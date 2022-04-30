@@ -1,8 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import { Table } from 'react-bootstrap';
 import './CurrentHill.css';
-import { IChainContext } from '../ChainContext';
-import { HillState } from './HillCard';
+import { IChainContext } from "../domain/IChainContext";
+import { HillState } from "../HillState";
+import { HillContext } from '../domain/HillContext';
 
 interface CurrentHillProps{
     hidden: boolean,
@@ -17,7 +18,7 @@ function CreatedHills(props: CurrentHillProps){
             props.chainContext.getCreations()
                 .then(
                     async c => {
-                        await Promise.all(c.map(addr => props.chainContext.getHillState(addr)))
+                        await Promise.all(c.map(addr => new HillContext(addr, props.chainContext).getHillState()))
                             .then(c => setState(c));
                     })}
         }

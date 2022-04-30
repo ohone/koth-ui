@@ -1,117 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import HillCard from './components/HillCard';
+import MainCard from './components/MainCard';
 import "./App.css";
 import Web3 from 'web3'
 import ConnectedPill from './components/ConnectedPill';
-import { ChainContext, IChainContext } from './ChainContext';
-import { useLocation } from 'react-router-dom'
-import { Button, Modal } from 'react-bootstrap';
+import { ChainContext } from './domain/ChainContext';
+import { IChainContext } from "./domain/IChainContext";
+import NotConnectedPill from './components/NotConnectedPill';
+import UnsupportedChainModal from './components/UnsupportedChainModal';
+import ConnectToWeb3Modal from './components/ConnectToWeb3Modal';
+import IncompatibleBrowserModal from './components/IncompatibleBrowserModal';
+
+const context = new ChainContext();
 
 function App() {
-  const [account, setAccount] = useState<string | undefined>(undefined);
-  const [chainId, setChainId] = useState<number | undefined>(undefined);
-  const [balance, setBalance] = useState<string | undefined>(undefined);
 
-  const web3 = new Web3(Web3.givenProvider);
+  const [account, setAccount] = useState<string>();
+  const [chainId, setChainId] = useState<number>();
+  const [balance, setBalance] = useState<string>();
+  const [compatibleBrowser, setCompatibleBrowser] = useState<boolean>(false);
+  
+  if (Web3.givenProvider !== null && compatibleBrowser === false){
+    setCompatibleBrowser(true);
+  }
+
   useEffect(() => {
-    web3.eth.getAccounts()
-      .then(a => {
-        setAccount(a[0]);
-        return web3.eth.getBalance(a[0])
-          .then(setBalance)
-          .catch(console.log)
-      })
-      .catch(a => console.log(a));
-
-    web3.eth.getChainId()
-      .then(setChainId)
-      .catch(a => console.log(a));
+    if (compatibleBrowser){
+      const getBalance : (acc:string) => Promise<string> = (acc) => context.getBalance(acc);
+      
+      if (!account){
+        context.getAccount().then(account => 
+          {
+            if (account){
+              setAccount(account);
+              getBalance(account).then(b => setBalance(b));
+            }
+          }
+          );
+      }
+      
+      context.getChain().then(cId => {
+        console.log("chain:"+cId);
+        if (cId !== undefined && cId !== chainId) {
+          setChainId(cId);
+        }
+      });
+    }
   });
+  
+  const pill = chainId !== undefined && account !== undefined && balance !== undefined
+    ? (<ConnectedPill ChainId={chainId} Address={account} BalanceWei={balance}/>)
+    : (<NotConnectedPill/>)
+  const header = (
+  <header className="App-header">
+    {pill}
+    <div className='App-header-title'>
+    King of the Hill
+    </div>
+  </header>)
+  
+  const errorModal = getErrorModal(
+    compatibleBrowser, 
+    (account !== undefined), 
+    chainId, 
+    setChainId, 
+    setAccount, 
+    context);
 
-  const address = useLocation().pathname.slice(1);
-  const addressSpecified = address.length !== 0;
-
-  const invalidAddressAlertModal = addressSpecified 
-    ? invalidAddressAlert(web3, address) 
-    : undefined;
-
-  console.log(invalidAddressAlertModal);
-  const context = new ChainContext(address);
   return (
     <div className="App">
-      {chainId !== undefined ? unsupportedChainAlert(context, chainId) : undefined}
-      {invalidAddressAlertModal}
-      <header className="App-header">
-        <ConnectedPill ChainId={chainId} Address={account} BalanceWei={balance}/>
-        <div className='App-header-title'>
-          King of the Hill
-        </div>
-      </header>
-      {account !== undefined && invalidAddressAlertModal === undefined
-        ? <HillCard chainContext={new ChainContext(address)} contract={address}/> 
+      {errorModal}
+      {header}
+      {compatibleBrowser 
+        ? <MainCard chainContext={new ChainContext()} /> 
         : undefined}
     </div>
   );
 }
 
-function unsupportedChainAlert(context: IChainContext, chainId: number){
-  const supported = context.supportedChain(chainId);
-  if (supported){
-    return undefined;
+function getErrorModal(
+  compatible: boolean | undefined, 
+  connected: boolean, 
+  chainId: number | undefined,
+  setChain: (newChain: number) => void,
+  setAccount: (account: string) => void, 
+  context: IChainContext){
+  if (!compatible){
+    return (<IncompatibleBrowserModal/>)
+  }
+  if (!connected){
+    return (<ConnectToWeb3Modal connectToEth={() => context.requestConnection().then(accs => setAccount(accs[0]))}/>)
   }
 
-  const supportedChainButtons = context.getSupportedChains().map(chain => {
-    return (<Button variant='primary' onClick={() => context.switchChain(chain)}>chain {chain}</Button>)
-  })
-
-
-  return (<Modal
-    show={true}
-    backdrop="static"
-    keyboard={false}
-  >
-    <Modal.Header closeButton>
-      <Modal.Title>Unsupported Chain</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      Chain {chainId} is not supported. Choose a supported chain to switch to:
-    </Modal.Body>
-    <Modal.Footer>
-      {supportedChainButtons}
-    </Modal.Footer>
-  </Modal>)
-}
-
-function invalidAddressAlert(web3: Web3, address : string) {
-  if (address.length === 0){
-    return undefined;
+  if (chainId !== undefined && !context.supportedChain(chainId)){
+    return (<UnsupportedChainModal 
+      chainId={chainId} 
+      switchChain={c => context.switchChainReturn(c).then(newChain => setChain(newChain))}
+      supportedChains={context.getSupportedChains()}/>)
   }
-  const validAddress = web3.utils.isAddress(address);
-  if (validAddress){
-    return undefined;
-  }
-  const handleClose = () => {
-    window.location.href='/';
-  };
-
-  return (<Modal
-    show={true}
-    onHide={handleClose}
-    backdrop="static"
-    keyboard={false}
-  >
-    <Modal.Header closeButton>
-      <Modal.Title>Invalid Address</Modal.Title>
-    </Modal.Header>
-    <Modal.Body>
-      Invalid address.
-    </Modal.Body>
-    <Modal.Footer>
-      <Button variant="primary" onClick={handleClose}>
-        Understood
-      </Button>
-    </Modal.Footer>
-  </Modal>)
 }
 
 export default App;

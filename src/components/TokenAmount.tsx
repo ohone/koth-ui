@@ -1,11 +1,17 @@
+import React from 'react';
+
 interface ITokenAmountProps{
     tokenName: string,
     tokenAmount: number,
-    tokenDecimals: number
+    tokenDecimals: number,
+    places: number | undefined
 }
 
 function TokenAmount(props: ITokenAmountProps){
-    return <div className="tokenAmount">{props.tokenAmount / Math.pow(10, props.tokenDecimals)} {props.tokenName}</div>
+    const tokenNormalised = props.tokenAmount / Math.pow(10, props.tokenDecimals);
+    return <div className="tokenAmount">{props.places === undefined 
+        ? tokenNormalised 
+        : tokenNormalised.toString().slice(0, props.places)} {props.tokenName} </div>
 }
 
 export default TokenAmount;

@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from 'react';
 import { Card, ListGroup, Placeholder } from 'react-bootstrap';
-import { IChainContext } from '../ChainContext';
-import {HistoryItem, HistoryItemProps} from './HistoryItem';
+import { IHillContext } from '../domain/IHillContext';
+import { CaptureEvent } from './CaptureEvent';
 
-interface HistoryProps{
+interface IHistoryPageProps{
     hidden: boolean,
-    context: IChainContext
+    context: IHillContext
 }
 
-function History(props: HistoryProps) {
+function HistoryPage(props: IHistoryPageProps) {
 
-    var [items, setItems] = useState<HistoryItemProps[]>();
+    var [items, setItems] = useState<CaptureEvent[]>();
 
     useEffect(() => {
         if (items === undefined){
@@ -20,16 +20,16 @@ function History(props: HistoryProps) {
     
     return (
         <div className='History' hidden={props.hidden}>
-            {items !== undefined ? renderItems(items) : loading()}
+            {items !== undefined ? renderItems(items) : loadingPlaceholder()}
         </div>
     );
 }
 
-function renderItems(items: HistoryItemProps[]){
+function renderItems(items: CaptureEvent[]){
     return  (<ListGroup className='list' variant="flush">
                 {items.map((item,idx) => 
                 <ListGroup.Item key={idx}>
-                    <HistoryItem 
+                    <CaptureEvent 
                         name={item.name} 
                         amount={item.amount} 
                         winning={items[idx + 1] !== undefined && items[idx + 1].amount < item.amount}/>
@@ -37,7 +37,7 @@ function renderItems(items: HistoryItemProps[]){
             </ListGroup>);
 }
 
-function loading(){
+function loadingPlaceholder(){
     return (
     <div>
     <Placeholder as={Card.Title} animation="glow">
@@ -51,4 +51,4 @@ function loading(){
         )
 }
 
-export default History;
+export default HistoryPage;

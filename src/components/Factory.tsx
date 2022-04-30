@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Button, Form } from 'react-bootstrap';
-import { IChainContext } from '../ChainContext';
+import { IChainContext } from "../domain/IChainContext";
 import "./Factory.css";
 
 interface FactoryProps{
