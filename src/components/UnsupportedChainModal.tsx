@@ -4,7 +4,7 @@ import ErrorModal from './ErrorModal';
 
 interface IUnsupportedChainModal{
     chainId: number
-    supportedChains: number[],
+    supportedChains: {id:number, name: string}[],
     switchChain: (chainId: number) => void
 }
 
@@ -13,7 +13,8 @@ function UnsupportedChainModal(props: IUnsupportedChainModal) {
     return (
       <Button key={1}
         variant='primary'
-        onClick={() => props.switchChain(chain)}>chain {chain}</Button>);
+        onClick={() =>
+          props.switchChain(chain.id)}>chain {chain.name}</Button>);
   });
   return <ErrorModal
     footer={supportedChainButtons}

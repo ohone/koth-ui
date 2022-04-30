@@ -74,8 +74,10 @@ export class ChainContext implements IChainContext {
     return ChainInfos.filter((o) => o.ChainId == chainId).length !== 0;
   };
 
-  getSupportedChains() : number[] {
-    return ChainInfos.map((o) => o.ChainId);
+  getSupportedChains() : {id: number, name: string}[] {
+    return ChainInfos.map((o) => {
+      return {id: o.ChainId, name: o.Name};
+    });
   };
 
   switchChain(chainId: number) :Promise<void> {
