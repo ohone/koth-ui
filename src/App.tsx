@@ -7,7 +7,6 @@ import {ChainContext} from './domain/ChainContext';
 import {IChainContext} from './domain/IChainContext';
 import NotConnectedPill from './components/NotConnectedPill';
 import UnsupportedChainModal from './components/UnsupportedChainModal';
-import ConnectToWeb3Modal from './components/ConnectToWeb3Modal';
 import IncompatibleBrowserModal from './components/IncompatibleBrowserModal';
 
 const context = new ChainContext();
@@ -61,10 +60,8 @@ function App() {
 
   const errorModal = getErrorModal(
       compatibleBrowser,
-      (account !== undefined),
       chainId,
       setChainId,
-      setAccount,
       context);
 
   return (
@@ -80,19 +77,11 @@ function App() {
 
 function getErrorModal(
     compatible: boolean | undefined,
-    connected: boolean,
     chainId: number | undefined,
     setChain: (newChain: number) => void,
-    setAccount: (account: string) => void,
     context: IChainContext) {
   if (!compatible) {
     return (<IncompatibleBrowserModal/>);
-  }
-  if (!connected) {
-    return (<ConnectToWeb3Modal
-      connectToEth={
-        () => context.requestConnection()
-            .then((accs) => setAccount(accs[0]))}/>);
   }
 
   if (chainId !== undefined && !context.supportedChain(chainId)) {
